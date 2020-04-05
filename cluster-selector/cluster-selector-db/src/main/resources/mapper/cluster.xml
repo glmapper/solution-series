@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.alipay.sofa.ark.scheduler.ob.dao.ServerDao">
+
+    <resultMap id="serverDO" type="com.alipay.sofa.ark.scheduler.ob.domain.ServerEntity">
+        <result property="id" column="id" javaType="int" jdbcType="INTEGER"/>
+        <result property="hostName" column="host_name" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <result property="ip" column="ip" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <result property="isMaster" column="is_master" javaType="int" jdbcType="TINYINT"/>
+        <result property="status" column="status" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <result property="masterLock" column="master_lock" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <result property="heartbeat" column="heartbeat" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+        <result property="gmtSqlServerTime" column="gmt_sql_server_time" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+        <result property="gmtModify" column="gmt_modify" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+        <result property="gmtCreate" column="gmt_create" javaType="java.util.Date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+
+    <insert id="insert">
+        insert into cluster_servers(host_name, ip, is_master, status, master_lock, heartbeat, gmt_modify, gmt_create) values (#{hostName}, #{ip}, #{isMaster}, #{status}, #{zone}, #{masterLock}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() as id
+        </selectKey>
+    </insert>
+
+    <update id="update">
+        update cluster_servers set host_name = #{hostName}, is_master = #{isMaster}, ip = #{ip},status = #{status}, master_lock = #{masterLock}, heartbeat = CURRENT_TIMESTAMP, gmt_modify = CURRENT_TIMESTAMP where id = #{id}
+    </update>
+
+    <update id="heartbeat" >
+        update cluster_servers set heartbeat = CURRENT_TIMESTAMP where host_name = #{hostName}
+    </update>
+
+    <select id="getIdByHostOrIp" resultType="java.lang.Integer">
+        select id from cluster_servers where host_name = #{hostName} or ip = #{ip}
+    </select>
+
+    <select id="getByIP" resultMap="serverDO">
+        select
+            id,
+            host_name,
+            ip,
+            is_master,
+            status,
+            master_lock,
+            heartbeat,
+            now() as gmt_sql_server_time,
+            gmt_modify,
+            gmt_create
+       from cluster_servers where ip = #{ip}
+    </select>
+
+    <select id="getMaster" resultMap="serverDO" >
+        select
+            id,
+            host_name,
+            ip,
+            is_master,
+            status,
+            master_lock,
+            heartbeat,
+            now() as gmt_sql_server_time,
+            gmt_modify,
+            gmt_create
+       from cluster_servers where is_master = #{isMaster} and status = #{status}
+    </select>
+
+    <select id="getSlaves" resultMap="serverDO">
+    	select
+            id,
+            host_name,
+            ip,
+            is_master,
+            status,
+            master_lock,
+            heartbeat,
+            now() as gmt_sql_server_time,
+            gmt_modify,
+            gmt_create
+    	from cluster_servers where is_master = #{isMaster}
+    </select>
+
+    <update id="setMaster" >
+        update cluster_servers set is_master = #{isMaster}, master_lock = #{masterLock}, status = #{status}, heartbeat = CURRENT_TIMESTAMP, gmt_modify = CURRENT_TIMESTAMP where host_name = #{hostName}
+    </update>
+
+    <update id="updateStatusAndIsMaster" >
+        update cluster_servers set status = #{status}, is_master = #{isMaster}, master_lock = #{masterLock}, gmt_modify = CURRENT_TIMESTAMP where host_name = #{hostName} and heartbeat = #{heartbeat} and gmt_modify = #{gmtModify}
+    </update>
+
+    <update id="updateStatus" >
+        update cluster_servers set status = #{status}, gmt_modify = CURRENT_TIMESTAMP where host_name = #{hostName} and heartbeat = #{heartbeat} and gmt_modify = #{gmtModify}
+    </update>
+
+    <update id="updateStatusByIp" >
+        update cluster_servers set status = #{status}, gmt_modify = CURRENT_TIMESTAMP where ip = #{ip}
+    </update>
+</mapper>
