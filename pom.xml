@@ -5,6 +5,8 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>cluster-selector</module>
+		<module>MQ</module>
+		<module>MQ/rocketmq</module>
 	</modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
